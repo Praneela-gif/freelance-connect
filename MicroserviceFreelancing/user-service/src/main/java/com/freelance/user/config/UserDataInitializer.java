@@ -65,7 +65,7 @@ public class UserDataInitializer implements CommandLineRunner {
             User savedFreelancer = userRepository.save(freelancer);
             profileRepository.save(Profile.builder()
                     .user(savedFreelancer)
-                    .skills("React, Spring Boot, Kafka, Docker, Java")
+                    .skills("React, Spring Boot, PostgreSQL, Docker, Java")
                     .experience("5 years of full stack architecture")
                     .portfolio("https://github.com/freelancer-alex")
                     .build());

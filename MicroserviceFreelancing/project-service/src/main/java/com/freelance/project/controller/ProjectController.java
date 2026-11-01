@@ -2,7 +2,7 @@ package com.freelance.project.controller;
 
 import com.freelance.project.entity.Project;
 import com.freelance.project.event.ProjectEvent;
-import com.freelance.project.kafka.ProjectKafkaProducer;
+import com.freelance.project.service.ProjectEventPublisher;
 import com.freelance.project.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,12 @@ public class ProjectController {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private ProjectKafkaProducer kafkaProducer;
+    private ProjectEventPublisher eventPublisher;
+
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
 
     @PostMapping
     public ResponseEntity<?> createProject(@RequestHeader(value = "X-User-Id", required = false) Long clientId,
@@ -48,8 +53,8 @@ public class ProjectController {
 
         Project savedProject = projectRepository.save(project);
 
-        // Emit Kafka event
-        kafkaProducer.sendProjectEvent(ProjectEvent.builder()
+        // Emit domain event
+        eventPublisher.sendProjectEvent(ProjectEvent.builder()
                 .eventType("PROJECT_CREATED")
                 .projectId(savedProject.getProjectId())
                 .clientId(clientId)
@@ -62,8 +67,27 @@ public class ProjectController {
     @GetMapping
     public ResponseEntity<?> getProjects(@RequestParam(required = false) String query,
                                          @RequestParam(required = false) String skill) {
-        List<Project> projects = projectRepository.searchOpenProjects(query, skill);
-        return ResponseEntity.ok(projects);
+        boolean hasQuery = query != null && !query.trim().isEmpty();
+        boolean hasSkill = skill != null && !skill.trim().isEmpty();
+
+        List<Project> openProjects = projectRepository.findByStatus("OPEN");
+        if (!hasQuery && !hasSkill) {
+            return ResponseEntity.ok(openProjects);
+        }
+
+        String q = hasQuery ? query.trim().toLowerCase() : "";
+        String s = hasSkill ? skill.trim().toLowerCase() : "";
+
+        List<Project> filtered = openProjects.stream().filter(p -> {
+            boolean matchesQuery = !hasQuery ||
+                    (p.getTitle() != null && p.getTitle().toLowerCase().contains(q)) ||
+                    (p.getDescription() != null && p.getDescription().toLowerCase().contains(q));
+            boolean matchesSkill = !hasSkill ||
+                    (p.getSkills() != null && p.getSkills().toLowerCase().contains(s));
+            return matchesQuery && matchesSkill;
+        }).collect(java.util.stream.Collectors.toList());
+
+        return ResponseEntity.ok(filtered);
     }
 
     @GetMapping("/{projectId}")
@@ -150,8 +174,8 @@ public class ProjectController {
 
         projectRepository.delete(project);
 
-        // Emit Kafka event
-        kafkaProducer.sendProjectEvent(ProjectEvent.builder()
+        // Emit domain event
+        eventPublisher.sendProjectEvent(ProjectEvent.builder()
                 .eventType("PROJECT_DELETED")
                 .projectId(projectId)
                 .clientId(project.getClientId())
@@ -182,8 +206,8 @@ public class ProjectController {
         project.setStatus("IN_PROGRESS");
         Project savedProject = projectRepository.save(project);
 
-        // Emit Kafka event
-        kafkaProducer.sendProjectEvent(ProjectEvent.builder()
+        // Emit domain event
+        eventPublisher.sendProjectEvent(ProjectEvent.builder()
                 .eventType("FREELANCER_HIRED")
                 .projectId(projectId)
                 .clientId(clientId)
@@ -218,8 +242,8 @@ public class ProjectController {
         project.setStatus("COMPLETED");
         Project savedProject = projectRepository.save(project);
 
-        // Emit Kafka event
-        kafkaProducer.sendProjectEvent(ProjectEvent.builder()
+        // Emit domain event
+        eventPublisher.sendProjectEvent(ProjectEvent.builder()
                 .eventType("PROJECT_COMPLETED")
                 .projectId(projectId)
                 .clientId(project.getClientId())

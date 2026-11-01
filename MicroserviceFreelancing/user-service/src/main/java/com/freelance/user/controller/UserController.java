@@ -6,7 +6,7 @@ import com.freelance.user.entity.User;
 import com.freelance.user.repository.ProfileRepository;
 import com.freelance.user.repository.UserRepository;
 import com.freelance.user.event.UserEvent;
-import com.freelance.user.kafka.UserKafkaProducer;
+import com.freelance.user.service.UserEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +27,7 @@ public class UserController {
     private ProfileRepository profileRepository;
 
     @Autowired
-    private UserKafkaProducer kafkaProducer;
+    private UserEventPublisher eventPublisher;
 
     @GetMapping("/profile")
     public ResponseEntity<?> getMyProfile(@RequestHeader("X-User-Id") Long userId) {
@@ -94,7 +94,7 @@ public class UserController {
         user.setBlocked(true);
         userRepository.save(user);
 
-        kafkaProducer.sendUserEvent(UserEvent.builder()
+        eventPublisher.sendUserEvent(UserEvent.builder()
                 .eventType("USER_BLOCKED")
                 .userId(user.getId())
                 .name(user.getName())
@@ -122,7 +122,7 @@ public class UserController {
         user.setBlocked(false);
         userRepository.save(user);
 
-        kafkaProducer.sendUserEvent(UserEvent.builder()
+        eventPublisher.sendUserEvent(UserEvent.builder()
                 .eventType("USER_UNBLOCKED")
                 .userId(user.getId())
                 .name(user.getName())

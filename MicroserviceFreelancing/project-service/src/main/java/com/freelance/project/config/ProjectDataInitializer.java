@@ -29,17 +29,17 @@ public class ProjectDataInitializer implements CommandLineRunner {
                     .budget(new BigDecimal("50000"))
                     .deadline(LocalDate.now().plusDays(30))
                     .clientId(2L)
-                    .skills("React, Spring Boot, Kafka, Docker")
+                    .skills("React, Spring Boot, PostgreSQL, Docker")
                     .status("OPEN")
                     .build();
 
             Project p2 = Project.builder()
                     .title("Cloud Infrastructure & Containerization Setup")
-                    .description("Need DevOps engineer to configure Docker Compose multi-service pipelines and Kafka event brokers for reliable microservice communications.")
+                    .description("Need DevOps engineer to configure Docker Compose multi-service pipelines and PostgreSQL database for reliable microservice data storage.")
                     .budget(new BigDecimal("35000"))
                     .deadline(LocalDate.now().plusDays(20))
                     .clientId(2L)
-                    .skills("Docker, Kafka, Linux, CI/CD")
+                    .skills("Docker, PostgreSQL, Linux, CI/CD")
                     .status("OPEN")
                     .build();
 

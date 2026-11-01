@@ -15,7 +15,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByStatus(String status);
 
     @Query("SELECT p FROM Project p WHERE p.status = 'OPEN' AND " +
-           "(:query IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
-           "(:skill IS NULL OR LOWER(p.skills) LIKE LOWER(CONCAT('%', :skill, '%')))")
+           "(CAST(:query AS string) IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%'))) AND " +
+           "(CAST(:skill AS string) IS NULL OR LOWER(p.skills) LIKE LOWER(CONCAT('%', CAST(:skill AS string), '%')))")
     List<Project> searchOpenProjects(@Param("query") String query, @Param("skill") String skill);
 }

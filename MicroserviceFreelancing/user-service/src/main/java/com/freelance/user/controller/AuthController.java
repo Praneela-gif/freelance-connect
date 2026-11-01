@@ -8,6 +8,8 @@ import com.freelance.user.repository.AdminDelegationRepository;
 import com.freelance.user.repository.ProfileRepository;
 import com.freelance.user.repository.UserRepository;
 import com.freelance.user.service.JwtService;
+import com.freelance.user.service.UserEventPublisher;
+import com.freelance.user.event.UserEvent;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.freelance.user.event.UserEvent;
-import com.freelance.user.kafka.UserKafkaProducer;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,7 +42,12 @@ public class AuthController {
     private JwtService jwtService;
 
     @Autowired
-    private UserKafkaProducer kafkaProducer;
+    private UserEventPublisher eventPublisher;
+
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
@@ -76,8 +81,8 @@ public class AuthController {
 
         profileRepository.save(profile);
 
-        // Emit Kafka event
-        kafkaProducer.sendUserEvent(UserEvent.builder()
+        // Emit domain event
+        eventPublisher.sendUserEvent(UserEvent.builder()
                 .eventType("USER_REGISTERED")
                 .userId(savedUser.getId())
                 .name(savedUser.getName())

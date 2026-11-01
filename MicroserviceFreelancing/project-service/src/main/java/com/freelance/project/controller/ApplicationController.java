@@ -2,7 +2,7 @@ package com.freelance.project.controller;
 
 import com.freelance.project.entity.Application;
 import com.freelance.project.event.ProjectEvent;
-import com.freelance.project.kafka.ProjectKafkaProducer;
+import com.freelance.project.service.ProjectEventPublisher;
 import com.freelance.project.repository.ApplicationRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class ApplicationController {
     private ApplicationRepository applicationRepository;
 
     @Autowired
-    private ProjectKafkaProducer kafkaProducer;
+    private ProjectEventPublisher eventPublisher;
 
     @PostMapping
     public ResponseEntity<?> applyForProject(@RequestHeader(value = "X-User-Id", required = false) Long freelancerId,
@@ -51,8 +51,8 @@ public class ApplicationController {
 
         Application saved = applicationRepository.save(application);
 
-        // Emit Kafka event
-        kafkaProducer.sendProjectEvent(ProjectEvent.builder()
+        // Emit domain event
+        eventPublisher.sendProjectEvent(ProjectEvent.builder()
                 .eventType("BID_SUBMITTED")
                 .projectId(request.getProjectId())
                 .freelancerId(freelancerId)
@@ -145,8 +145,8 @@ public class ApplicationController {
 
         Application saved = applicationRepository.save(application);
 
-        // Emit Kafka event
-        kafkaProducer.sendProjectEvent(ProjectEvent.builder()
+        // Emit domain event
+        eventPublisher.sendProjectEvent(ProjectEvent.builder()
                 .eventType("DELIVERABLE_SUBMITTED")
                 .projectId(application.getProjectId())
                 .freelancerId(freelancerId)
@@ -177,8 +177,8 @@ public class ApplicationController {
 
         Application saved = applicationRepository.save(application);
 
-        // Emit Kafka event
-        kafkaProducer.sendProjectEvent(ProjectEvent.builder()
+        // Emit domain event
+        eventPublisher.sendProjectEvent(ProjectEvent.builder()
                 .eventType("DELIVERABLE_REVIEWED")
                 .projectId(application.getProjectId())
                 .freelancerId(application.getFreelancerId())
