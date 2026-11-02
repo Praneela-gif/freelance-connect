@@ -5,8 +5,17 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-export const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE_URL || 'http://localhost:8081';
-export const PROJECT_SERVICE_URL = import.meta.env.VITE_PROJECT_SERVICE_URL || 'http://localhost:8082';
+const formatUrl = (url, fallback) => {
+  if (!url) return fallback;
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return 'https://' + trimmed;
+};
+
+export const USER_SERVICE_URL = formatUrl(import.meta.env.VITE_USER_SERVICE_URL, 'http://localhost:8081');
+export const PROJECT_SERVICE_URL = formatUrl(import.meta.env.VITE_PROJECT_SERVICE_URL, 'http://localhost:8082');
 
 // Pre-configured axios instance that routes to the appropriate service and includes JWT token
 export const api = axios.create();

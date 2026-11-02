@@ -1,14 +1,14 @@
-# Freelancing Platform (2-Service Architecture + Kafka & Docker)
+# Freelancing Platform Microservices (PostgreSQL + React + Docker + Render Ready)
 
-A modernized, high-performance freelancing application streamlined from 9 microservices down to **2 core, cohesive microservices** with **Apache Kafka** event streaming and **Docker Compose** containerization.
+A modernized, high-performance freelance marketplace platform built with **Spring Boot 3**, **PostgreSQL**, **React (Vite)**, and **Docker Compose**. Fully configured for **1-Click Blueprint Deployment on Render**.
 
 ---
 
-## 🏛️ Architecture Overview
+## ??? Architecture Overview
 
-The system is organized into **2 specialized domain services** and a modern **React frontend**:
+The platform consists of **2 domain microservices**, a **PostgreSQL database**, and a responsive **React frontend**:
 
-```
+`
 +-------------------------------------------------------------+
 |                      React Frontend                         |
 |           (Port 5173 / Production Nginx Port 80)            |
@@ -23,105 +23,85 @@ The system is organized into **2 specialized domain services** and a modern **Re
 |  - JWT Authentication |             |  - Job Postings       |
 |  - User Profiles      |             |  - Proposals / Bids   |
 |  - Admin Delegation   |             |  - Work Deliverables  |
-|  - - MySQL Database    |             |  - - MySQL Database    |
 +-----------+-----------+             +-----------+-----------+
             |                                     |
             +------------------+------------------+
                                |
                                v
                      +-------------------+
-                     |   Apache Kafka    |
-                     |    (Port 9092)    |
-                     |  - user-events    |
-                     |  - project-events |
+                     |    PostgreSQL     |
+                     |    (Port 5432)    |
+                     |   reelancedb   |
                      +-------------------+
-```
+`
 
-### 1. `user-service` (Port 8081)
-- **Authentication**: Secure BCrypt passwords, JWT issuance (`/api/auth/register`, `/api/auth/login`).
-- **User Management**: Client, Freelancer, Admin, and Assistant accounts (`/api/users`).
-- **Profiles**: Client company data, Freelancer skills, experience, and portfolio links (`/api/users/profile`).
-- **Administrative Delegation**: Assign dynamic assistant permissions (`MANAGE_USERS`, `REMOVE_PROJECTS`) with optional expiration timers (`/api/admin/delegate`).
-- **Kafka Integration**: Emits events to `user-events` on user registrations and account status updates.
+### 1. user-service (Port 8081)
+- **Role-Based Auth & JWT**: Client, Freelancer, Admin, and Assistant.
+- **Profile Management**: Bio, skills, experience, and portfolio links.
+- **Admin Delegation**: Time-bound administrative privilege delegation (MANAGE_USERS, REMOVE_PROJECTS).
+- **Health Check**: GET /api/auth/health
 
-### 2. `project-service` (Port 8082)
-- **Projects**: Create, browse, search, and moderate jobs (`/api/projects`).
-- **Proposals & Bids**: Freelancers apply with bid amounts and proposals (`/api/applications`).
-- **Contract Hiring**: Clients accept proposals and hire freelancers directly into `IN_PROGRESS` contracts.
-- **Milestone Deliverables**: Freelancers submit project deliverables, clients review (Approve / Request Changes / Reject), and mark projects as `COMPLETED`.
-- **Kafka Integration**: Emits events to `project-events` on project creation, bids, hiring, deliverable submissions, and completions.
+### 2. project-service (Port 8082)
+- **Project Marketplace**: Post, edit, complete, delete, and search projects.
+- **Proposal / Bid Submissions**: Freelancers apply with custom bids.
+- **Milestone & Delivery Workflow**: Deliverable submissions and approval/revision reviews.
+- **Health Check**: GET /api/projects/health
 
----
-
-## 🚀 Quick Start with Docker Compose
-
-To launch the entire platform (Kafka, user-service, project-service, and frontend) with a single command:
-
-```bash
-docker compose up --build
-```
-- **Frontend Application**: http://localhost:5173
-- **User Service API**: http://localhost:8081
-- **Project Service API**: http://localhost:8082
-- **Apache Kafka Broker**: localhost:9092
-- **MySQL Database**:
-  - Host (Windows): localhost
-  - JDBC URL (Docker): jdbc:mysql://host.docker.internal:3306/freelancing
-  - Username: root
-  - Password: root
+### 3. ReactFrontend (Port 5173)
+- Modern SPA built with React + Vite.
+- Role-based responsive navigation, modals, and proposal submission.
+- Production-ready Nginx reverse proxy.
 
 ---
 
-## 💻 Running Locally (Development Mode)
+## ?? 1-Click Deployment on Render
 
-### 1. Start `user-service`
-```bash
-cd MicroserviceFreelancing/user-service
-mvn spring-boot:run
-```
-*(Runs on port 8081)*
+This repository includes a pre-configured ender.yaml Blueprint file for automatic zero-configuration deployment:
 
-### 2. Start `project-service`
-```bash
-cd MicroserviceFreelancing/project-service
-mvn spring-boot:run
-```
-*(Runs on port 8082)*
-
-### 3. Start React Frontend
-```bash
-cd ReactFreelancing
-npm install
-npm run dev
-```
-*(Runs on [http://localhost:5173](http://localhost:5173))*
+1. Push this repository to GitHub:
+   `ash
+   git add .
+   git commit -m "Configure PostgreSQL and Render deployment"
+   git push origin main
+   `
+2. Log in to your [Render Dashboard](https://dashboard.render.com/).
+3. Click **New +** > **Blueprint**.
+4. Select your GitHub repository (reelance-connect).
+5. Render will automatically detect ender.yaml and provision:
+   - **reelance-db**: Managed PostgreSQL Database.
+   - **reelance-user-service**: Spring Boot Web Service (Docker).
+   - **reelance-project-service**: Spring Boot Web Service (Docker).
+   - **reelance-frontend**: Static Site with automatic routing.
+6. Click **Apply** to deploy the entire stack!
 
 ---
 
-## 👥 Pre-Seeded Demo Accounts
+## ?? Local Execution with Docker Compose
 
-Both backend services include automatic database initializers with demo credentials ready to test out of the box:
+To run the complete system locally:
 
-| Role | Email | Password | Description |
-|---|---|---|---|
-| **Admin** | `admin@platform.com` | `admin123` | Full administrative control, user moderation, privilege delegation |
-| **Client** | `client@techcorp.com` | `client123` | TechCorp Global - posts jobs, reviews bids, hires freelancers |
-| **Freelancer** | `freelancer@dev.com` | `free123` | Alex Rivera - applies for jobs, submits deliverables |
-| **Assistant** | `assistant@platform.com` | `assist123` | Morgan Assistant - pre-authorized with `MANAGE_USERS` & `REMOVE_PROJECTS` |
+`ash
+docker compose down
+docker compose up -d --build
+`
+
+### Verify Running Services:
+`ash
+docker ps
+`
+
+- **Frontend Application**: [http://localhost:5173](http://localhost:5173)
+- **User Service Health**: [http://localhost:8081/api/auth/health](http://localhost:8081/api/auth/health)
+- **Project Service Health**: [http://localhost:8082/api/projects/health](http://localhost:8082/api/projects/health)
+- **PostgreSQL Database**: Port 5432 (reelancedb, user: postgres, password: password)
 
 ---
 
-## 📡 Kafka Event Topics
+## ?? Default Test Accounts (Pre-Seeded)
 
-- **`user-events`**:
-  - `USER_REGISTERED`
-  - `USER_BLOCKED`
-  - `USER_UNBLOCKED`
-- **`project-events`**:
-  - `PROJECT_CREATED`
-  - `BID_SUBMITTED`
-  - `FREELANCER_HIRED`
-  - `DELIVERABLE_SUBMITTED`
-  - `DELIVERABLE_REVIEWED`
-  - `PROJECT_COMPLETED`
-  - `PROJECT_DELETED`
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | dmin@platform.com | dmin123 |
+| **Client** | client@techcorp.com | client123 |
+| **Freelancer** | reelancer@dev.com | ree123 |
+| **Assistant** | ssistant@platform.com | ssist123 |
